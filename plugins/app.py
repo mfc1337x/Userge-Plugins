@@ -5,6 +5,7 @@
 # By - @kirito6969
 
 import bs4
+import aiohttp
 import requests
 
 from userge import userge, Message
@@ -44,3 +45,27 @@ async def app(message: Message):
         await message.edit("No result found in search. Please enter **Valid app name**")
     except Exception as err:
         await message.err(err)
+
+
+@userge.on_cmd(
+    'magisk',
+    about={
+        'header': "Fetch all magisk release from source.",
+        'usage': "{tr}magisk",
+    },
+)
+async def magisk(message: Message):
+    """ Scrap all magisk version from source. """
+    magisk_branch = {"Stable": "stable", "Beta": "beta", "Canary": "canary"}
+    magisk_raw_uri = "https://raw.githubusercontent.com/topjohnwu/magisk-files/master/"
+    releases = "**Latest Magisk Releases:**\n"
+    async with aiohttp.ClientSession() as session:
+        for _type, branch in magisk_branch.items():
+            async with session.get(magisk_raw_uri + branch + ".json") as res:
+                data = await res.json(content_type="text/plain")
+                releases += (
+                    f'**× {_type}:** `{data["magisk"]["version"]}-{data["magisk"]["versionCode"]}`|'
+                    f'[Notes]({data["magisk"]["note"]})|'
+                    f'[Magisk]({data["magisk"]["link"]})|\n'
+                )
+        await message.edit(releases)
